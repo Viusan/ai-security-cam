@@ -2,6 +2,7 @@ import cv2
 import os
 import asyncio
 import time
+import face_recognition
 
 from ultralytics import YOLO
 from telegram import Bot
@@ -10,6 +11,10 @@ from dotenv import load_dotenv
 
 load_dotenv() #loads env file, finds and reads them
 
+viu_image = face_recognition.load_image_file("viusan.jpg")#getting image of myself
+print(viu_image.shape, viu_image.dtype)
+viu_encoding = face_recognition.face_encodings(viu_image)#getting the encoding
+
 #get the token and chat from enviornment file i have
 TOKEN = os.getenv("TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -17,11 +22,28 @@ CHAT_ID = os.getenv("CHAT_ID")
 #function to actually send the image to telegram bot 
 async def send_message(image_path):
     bot = Bot(token=TOKEN)
+    #we get encoding of the face that was scanned by the camera
+    scanned_face = face_recognition.load_image_file(image_path)
+    scanned_encoding = face_recognition.face_encodings(scanned_face)
+
+    caption_text = "Alert: Unknown person detected"#default alert
+
+    #face encodings will return a list where index 0 is the face, and if there are no faces that were detected
+    #then we would be looking into an empty list which causes errors here, so we create a if statement
+    if len(scanned_encoding) > 0:
+        match = face_recognition.compare_faces(viu_encoding, scanned_encoding[0])
+        if match[0]:#match returns [true/false] so we have to enter the list and check
+            caption_text = "Alert: Viusan detected"
+        else: 
+            caption_text = "Alert: Unknown person detected"
+    else:
+        pass
+
     with open(image_path, "rb") as photo:
         await bot.send_photo(
             chat_id=CHAT_ID,
             photo=photo,
-            caption="Alert: Person detected!"
+            caption=caption_text
         )
 
 #YOLO model that we are going to use
