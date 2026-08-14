@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv() #loads env file, finds and reads them
 
 viu_image = face_recognition.load_image_file("viusan.jpg")#getting image of myself
-print(viu_image.shape, viu_image.dtype)
 viu_encoding = face_recognition.face_encodings(viu_image)#getting the encoding
 
 #get the token and chat from enviornment file i have
